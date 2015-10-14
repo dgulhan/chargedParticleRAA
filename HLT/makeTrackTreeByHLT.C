@@ -1,28 +1,15 @@
 #include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
 #include <vector>
 #include <algorithm>
-#include "TCanvas.h"
-#include "TError.h"
-#include "TPad.h"
+
+
 #include "TString.h"
-#include "TRandom1.h"
-#include "TLorentzVector.h"
-#include "TH1F.h"
-#include "TF1.h"
- 
+
 #include "TFile.h"
 #include "TTree.h"
-#include "TH1D.h"
-#include "TProfile.h"
-#include "TProfile2D.h"
-#include "TH2D.h"
-#include "TCanvas.h"
-#include "TLegend.h"
-#include "TLatex.h"
-#include "TString.h"  
-#include "TCut.h"
-#include "TNtuple.h"
-#include "TLine.h" 
 #include "hi.C"
 #include "nt.C"
 
@@ -58,7 +45,7 @@ public :
     reset();
    }
    void setEvent(int fEvent, float fJtPt1,  float fJtEta1,  float fJtPhi1, float fPPtMax, float fPEtaPtMax, float fNColl, float fNPart, float *fPPt, float *fPEta, float *fPPhi){
-    event = fevent;
+    event = fEvent;
     jtPt1 = fJtPt1;
     jtEta1 = fJtEta1;
     jtPhi1 = fJtPhi1;
@@ -66,7 +53,7 @@ public :
     pEtaPtMax = fPEtaPtMax;
     nColl = fNColl;
     nPart = fNPart;
-    for(int i = 0; i < nTrk; i++){
+    for(int i = 0; i < nPart; i++){
      pPt[i] = fPPt[i];
      pPhi[i] = fPPhi[i];
      pEta[i] = fPEta[i];
@@ -74,15 +61,20 @@ public :
    }
 };
 
-void makeTrackTreeByHLT(TString infname="merged_openHLT_HLT_20151013_HydjetMB_5020GeV.root"){ 
+void makeTrackTreeByHLT(){ 
  TH1D::SetDefaultSumw2();   
-  
+ TString infname="merged_openHLT_HLT_20151013_HydjetMB_5020GeV.root";
+ cout<<"file:"<<infname.Data()<<endl;
  //parse trigger names and prescales
+ cout<<"parse trigger names and prescales"<<endl;
+ std::stringstream ftriggers;
+ ftriggers <<"list_test.txt";   
+ 
+ ifstream input_file(ftriggers.str().c_str());
 
- ifstream input_file("list_triggers.txt");
  string line;
  
- std::vector<std::string> nameHlt;//hlt paths
+ std::vector<std::string> nameHLT;//hlt paths
  std::vector<std::string> nameL1;//corresponding l1 paths
  std::vector<int> prescalesHLT;
  std::vector<int> prescalesL1;
@@ -92,28 +84,32 @@ void makeTrackTreeByHLT(TString infname="merged_openHLT_HLT_20151013_HydjetMB_50
  int numHLT = 0;
  while(getline(input_file,line)){
   stringstream line_s;
-  string stringHLT;
-  string stringL1;
+  std::string stringHLT;
+  std::string stringL1;
+  int presHLT;
+  int presL1;
   bool cutJetTmp;
   bool JetorTrackPt;
   line_s << line;
   line_s >> stringHLT >> stringL1 >> presHLT >> presL1 >> cutJetTmp >> JetorTrackPt;	
-  nameHLT.pushback(stingHLT);
-  nameL1.pushback(stingL1);
-  prescalesHLT.pushback(presHLT);
-  prescalesL1.pushback(presL1);
-  cutJet.pushback(cutJetTmp);
-  ptCut.pushback(JetorTrackPt);
+  nameHLT.push_back(stringHLT);
+  nameL1.push_back(stringL1);
+  prescalesHLT.push_back(presHLT);
+  prescalesL1.push_back(presL1);
+  cutJet.push_back(cutJetTmp);
+  ptCut.push_back(JetorTrackPt);
   numHLT++;
  }
 
  //define branches for each hlt tree
+ cout<<"define branches for each hlt tree"<<endl;
+
  newEvent evnt; 
  TFile * outf = new TFile("out.root","recreate");//output file
     
  TTree * hltTrackTree[numHLT];
  for(int iHLT = 0; iHLT < numHLT; iHLT++){
-  hltTrackTree[iHLT] = new TTree(Form("%s_TrackTree",nameHLT.data()),"a tree with HIJING events");
+  hltTrackTree[iHLT] = new TTree(Form("%s_TrackTree",nameHLT[iHLT].data()),"a tree with HIJING events");
   hltTrackTree[iHLT]->Branch("event", &evnt.event, "event/I");
   hltTrackTree[iHLT]->Branch("jtPt1", &evnt.jtPt1, "jtPt1/F");
   hltTrackTree[iHLT]->Branch("jtEta1", &evnt.jtEta1, "jtEta1/F");
@@ -136,6 +132,7 @@ void makeTrackTreeByHLT(TString infname="merged_openHLT_HLT_20151013_HydjetMB_50
   // } 
  
   //tree variables
+ cout<<"tree variables"<<endl;
  int fEvent = 0;
  float fJtPt1;
  float fJtEta1;
@@ -148,17 +145,19 @@ void makeTrackTreeByHLT(TString infname="merged_openHLT_HLT_20151013_HydjetMB_50
  float fPEta[20000];
  float fPPhi[20000];
 
- bool fHLT[100];
+ int fHLT[100];
  int fPresHLT[100];
- bool fL1[100];
+ int fL1[100];
  int fPresL1[100];
  
  //read openhlt file
- hi * fgen = new hi(Form("%s",infname.Data()));
- nt * fdijet = new nt(Form("%s",infname.Data()));
+ cout<<"read openhlt file"<<endl;
 
- TFile infile = TFile::Open(infname);
- fhlt = (TTree*) infile->Get("hltbitanalysis/HltTree");
+ hi * fgen = new hi(infname.Data());
+ nt * fdijet = new nt(infname.Data());
+
+ TFile *infile = TFile::Open(infname.Data());
+ TTree* fhlt = (TTree*) infile->Get("hltbitanalysis/HltTree");
  for(int iHLT = 0; iHLT < nameHLT.size(); iHLT++ ){
   fhlt->SetBranchStatus(nameHLT[iHLT].data(), 1);
   fhlt->SetBranchAddress(nameHLT[iHLT].data(), &(fHLT[iHLT]));
@@ -167,6 +166,8 @@ void makeTrackTreeByHLT(TString infname="merged_openHLT_HLT_20151013_HydjetMB_50
  
  
   //loop over events
+  cout<<"loop over events"<<endl;
+
   int nentries = fgen->GetEntriesFast();
 
   for(int jentry=0;jentry<nentries;jentry++){
@@ -177,7 +178,7 @@ void makeTrackTreeByHLT(TString infname="merged_openHLT_HLT_20151013_HydjetMB_50
    fdijet->GetEntry(jentry);
   
    fJtPt1 = fdijet->pt1;
-   if(cutJet[iHLT] && fJtPt1 < ptCut) continue;
+   if(cutJet[iHLT] && (fJtPt1 < ptCut[iHLT])) continue;
    fJtEta1 = fdijet->eta1;
    fJtPhi1 = fdijet->phi1;
    fNColl = fgen->ncoll;
@@ -187,24 +188,26 @@ void makeTrackTreeByHLT(TString infname="merged_openHLT_HLT_20151013_HydjetMB_50
    float fPPtMax = 0;
    float fPEtaPtMax = -99;
    for(int ipart = 0; ipart < fgen->mult; ipart++){
-    int pdg = abs(fgen->pdg[ipart]);
-    if(!(fgen->cha[ipart] != 0 && (pdg==211 || pdg==2212 || pdg==3312 || pdg==321|| pdg==3112 || pdg==11 || pdg==13 || pdg==3222 || pdg==3334))) continue;
-    fPPt[ipart] = fgen->pt[ipart];
-    fPEta[ipart] = fgen->eta[ipart];
-    fPPhi[ipart] = fgen->phi[ipart];
+    // int pdg = abs(fgen->pdg[ipart]);
+    // int pdg = abs(fgen->pdg[ipart]);
+    int pdg = abs((*(fgen->pdg)).at(ipart));
+    if(!((*(fgen->chg)).at(ipart) != 0 && (pdg==211 || pdg==2212 || pdg==3312 || pdg==321|| pdg==3112 || pdg==11 || pdg==13 || pdg==3222 || pdg==3334))) continue;
+    fPPt[ipart] = (*(fgen->pt)).at(ipart);
+    fPEta[ipart] = (*(fgen->eta)).at(ipart);
+    fPPhi[ipart] = (*(fgen->phi)).at(ipart);
     if(fPPt[ipart] > fPPtMax){
      fPPtMax = fPPt[ipart];
      fPEtaPtMax = fPEta[ipart];
     }
     fNPart++;
    }
-   if(!cutJet[iHLT] && fPPtMax < ptCut) continue;
+   if(!cutJet[iHLT] && (fPPtMax < ptCut[iHLT])) continue;
    
    evnt.setEvent(fEvent, fJtPt1,  fJtEta1,  fJtPhi1, fPPtMax, fPEtaPtMax, fNColl, fNPart, fPPt, fPEta, fPPhi);
   
    fEvent++;
    // cout<<evnt.beta<<endl;
-   hltTrackTree->Fill();
+   hltTrackTree[iHLT]->Fill();
    evnt.reset();
   }
   outf->cd();
@@ -215,6 +218,6 @@ void makeTrackTreeByHLT(TString infname="merged_openHLT_HLT_20151013_HydjetMB_50
  
  int main(int argc, char *argv[])
 {
-  makeTrackTreeByHLT(atoi(argv[1]));
+  makeTrackTreeByHLT();
   return 0;
 }
