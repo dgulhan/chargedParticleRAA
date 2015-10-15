@@ -1,18 +1,15 @@
 HLT_PuAK4CaloJet40_Eta2p5_v1   L1_MinimumBiasHF1_AND   10   50   1   55
 HLT_PuAK4CaloJet40_Eta2p5_Cent30_50_v1   L1_Centrality30_50   200   1   1   55
-HLT_PuAK4CaloJet40_Eta2p5_Cent50_100_v1   L1_Centrality50_100   10   1   1   55
+HLT_PuAK4CaloJet40_Eta2p5_Cent50_100_v1   L1_Centrality70_100   10   1   1   55
 HLT_PuAK4CaloJet60_Eta2p5_v1   L1_SingleS1Jet28_BptxAND   100   1   1   75
 HLT_PuAK4CaloJet60_Eta2p5_Cent30_50_v1   L1_SingleS1Jet28_Centrality30_50   50   1   1   75
 HLT_PuAK4CaloJet60_Eta2p5_Cent50_100_v1   L1_SingleS1Jet28_Centrality50_100   1   1   1   75
 HLT_PuAK4CaloJet80_Eta2p5_v1   L1_SingleJet44_BptxAND   1   1   1   95
 HLT_PuAK4CaloJet80_Eta2p5_Cent30_50_v1   L1_SingleS1Jet28_Centrality30_50   50   1   1   95
 HLT_PuAK4CaloJet80_Eta2p5_Cent50_100_v1   L1_SingleS1Jet28_Centrality50_100   1   1   1   95
-HLT_PuAK4CaloJet100_Eta2p5_v1   L1_SingleJet56_BptxAND   1   1   1   115
+HLT_PuAK4CaloJet100_Eta2p5_v1   L1_SingleS1Jet56_BptxAND   1   1   1   115
 HLT_PuAK4CaloJet100_Eta2p5_Cent30_50_v1   L1_SingleS1Jet28_Centrality30_50   50   1   1   115
 HLT_PuAK4CaloJet100_Eta2p5_Cent50_100_v1   L1_SingleS1Jet28_Centrality50_100   1   1   1   115
-HLT_PuAK4CaloJet110_Eta2p5_v1   L1_SingleJet56_BptxAND   1   1   1   125
-HLT_PuAK4CaloJet110_Eta2p5_Cent30_50_v1   L1_SingleS1Jet28_Centrality30_50   50   1   1   125
-HLT_PuAK4CaloJet110_Eta2p5_Cent50_100_v1   L1_SingleS1Jet28_Centrality50_100   1   1   1   125
 HLT_HIFullTrack12_v1   L1_MinimumBiasHF1_AND   50   1   0 
 HLT_HIFullTrack30_L1Centrality010_v1   L1_SingleTrack12_Centrality0_10   30   1   0
 HLT_HIFullTrack30_L1Centrality1030_v1   L1_SingleTrack12_Centrality10_30   30   1   0

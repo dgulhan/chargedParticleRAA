@@ -27,7 +27,8 @@ public :
    float          pPt[20000]; 
    float          pPhi[20000]; 
    float          pEta[20000]; 
- 
+   int            pres;
+   float          wNColl[6];
    void reset(){
     event = -9;
     jtPt1 = -9;
@@ -44,7 +45,7 @@ public :
    newEvent(){
     reset();
    }
-   void setEvent(int fEvent, float fJtPt1,  float fJtEta1,  float fJtPhi1, float fPPtMax, float fPEtaPtMax, float fNColl, float fNPart, float *fPPt, float *fPEta, float *fPPhi){
+   void setEvent(int fEvent, float fJtPt1,  float fJtEta1,  float fJtPhi1, float fPPtMax, float fPEtaPtMax, float fNColl, float fNPart, float *fPPt, float *fPEta, float *fPPhi, int fPres, float *fWNColl){
     event = fEvent;
     jtPt1 = fJtPt1;
     jtEta1 = fJtEta1;
@@ -58,6 +59,10 @@ public :
      pPhi[i] = fPPhi[i];
      pEta[i] = fPEta[i];
     } 
+    for(int i = 0; i < 6; i++){
+     wNColl[i] = fWNColl[i];
+	}
+	pres = fPres;
    }
 };
 
@@ -68,7 +73,7 @@ void makeTrackTreeByHLT(){
  //parse trigger names and prescales
  cout<<"parse trigger names and prescales"<<endl;
  std::stringstream ftriggers;
- ftriggers <<"list_test.txt";   
+ ftriggers <<"list_triggers.txt";   
  
  ifstream input_file(ftriggers.str().c_str());
 
@@ -150,6 +155,13 @@ void makeTrackTreeByHLT(){
  int fL1[100];
  int fPresL1[100];
  
+ //read ncoll distributions
+ TFile *fileNcoll = new TFile("../centrality/Ncoll_dists_percent.root");
+ TH1D *histNcoll[6];
+ for(int icent = 0; icent < 6; icent++){
+  histNcoll[icent] = (TH1D*)fileNcoll->Get(Form("histNcollDist%d",icent));
+ }
+ 
  //read openhlt file
  cout<<"read openhlt file"<<endl;
 
@@ -164,7 +176,7 @@ void makeTrackTreeByHLT(){
   fhlt->SetBranchStatus(nameL1[iHLT].data(), 1);
   fhlt->SetBranchAddress(nameL1[iHLT].data(), &(fL1[iHLT]));
  
- 
+  if(!fL1[iHLT] || !fHLT[iHLT]) continue;
   //loop over events
   cout<<"loop over events"<<endl;
 
@@ -179,11 +191,17 @@ void makeTrackTreeByHLT(){
   
    fJtPt1 = fdijet->pt1;
    if(cutJet[iHLT] && (fJtPt1 < ptCut[iHLT])) continue;
+   int fPres = prescalesHLT[iHLT]*prescalesL1[iHLT];
+   
    fJtEta1 = fdijet->eta1;
    fJtPhi1 = fdijet->phi1;
    fNColl = fgen->ncoll;
-  
-  
+   
+   float fWNColl[6];
+   for(int icent = 0; icent < 6; icent++){
+    fWNColl[icent] = histNcoll[icent]->GetBinContent(histNcoll[icent]->FindBin(fNColl));
+   }
+   
    fNPart = 0;
    float fPPtMax = 0;
    float fPEtaPtMax = -99;
@@ -203,7 +221,7 @@ void makeTrackTreeByHLT(){
    }
    if(!cutJet[iHLT] && (fPPtMax < ptCut[iHLT])) continue;
    
-   evnt.setEvent(fEvent, fJtPt1,  fJtEta1,  fJtPhi1, fPPtMax, fPEtaPtMax, fNColl, fNPart, fPPt, fPEta, fPPhi);
+   evnt.setEvent(fEvent, fJtPt1,  fJtEta1,  fJtPhi1, fPPtMax, fPEtaPtMax, fNColl, fNPart, fPPt, fPEta, fPPhi, fPres, fWNColl);
   
    fEvent++;
    // cout<<evnt.beta<<endl;
