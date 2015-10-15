@@ -68,7 +68,7 @@ public :
 
 void makeTrackTreeByHLT(){ 
  TH1D::SetDefaultSumw2();   
- TString infname="merged_openHLT_HLT_20151013_HydjetMB_5020GeV.root";
+ TString infname="HLT_20151014_PyquenUnquenched_Dijet_pthat80.root";
  cout<<"file:"<<infname.Data()<<endl;
  //parse trigger names and prescales
  cout<<"parse trigger names and prescales"<<endl;
@@ -94,7 +94,7 @@ void makeTrackTreeByHLT(){
   int presHLT;
   int presL1;
   bool cutJetTmp;
-  bool JetorTrackPt;
+  float JetorTrackPt;
   line_s << line;
   line_s >> stringHLT >> stringL1 >> presHLT >> presL1 >> cutJetTmp >> JetorTrackPt;	
   nameHLT.push_back(stringHLT);
@@ -103,6 +103,7 @@ void makeTrackTreeByHLT(){
   prescalesL1.push_back(presL1);
   cutJet.push_back(cutJetTmp);
   ptCut.push_back(JetorTrackPt);
+  cout<< stringHLT << stringL1 << presHLT << presL1 << cutJetTmp << JetorTrackPt << endl;
   numHLT++;
  }
 
@@ -110,7 +111,7 @@ void makeTrackTreeByHLT(){
  cout<<"define branches for each hlt tree"<<endl;
 
  newEvent evnt; 
- TFile * outf = new TFile("out.root","recreate");//output file
+ TFile * outf = new TFile(Form("out%s",infname.Data()),"recreate");//output file
     
  TTree * hltTrackTree[numHLT];
  for(int iHLT = 0; iHLT < numHLT; iHLT++){
@@ -170,13 +171,13 @@ void makeTrackTreeByHLT(){
 
  TFile *infile = TFile::Open(infname.Data());
  TTree* fhlt = (TTree*) infile->Get("hltbitanalysis/HltTree");
- for(int iHLT = 0; iHLT < nameHLT.size(); iHLT++ ){
+ for(int iHLT = 0; iHLT < numHLT; iHLT++ ){
+  cout << "iHLT = " << iHLT << " numHLT = "<< numHLT<<endl;
   fhlt->SetBranchStatus(nameHLT[iHLT].data(), 1);
   fhlt->SetBranchAddress(nameHLT[iHLT].data(), &(fHLT[iHLT]));
   fhlt->SetBranchStatus(nameL1[iHLT].data(), 1);
   fhlt->SetBranchAddress(nameL1[iHLT].data(), &(fL1[iHLT]));
  
-  if(!fL1[iHLT] || !fHLT[iHLT]) continue;
   //loop over events
   cout<<"loop over events"<<endl;
 
@@ -187,6 +188,8 @@ void makeTrackTreeByHLT(){
 
    fgen->GetEntry(jentry);
    fhlt->GetEntry(jentry);
+   if(!fL1[iHLT] || !fHLT[iHLT]) continue;
+
    fdijet->GetEntry(jentry);
   
    fJtPt1 = fdijet->pt1;
@@ -230,6 +233,7 @@ void makeTrackTreeByHLT(){
   }
   outf->cd();
   hltTrackTree[iHLT]->Write();
+  cout<<numHLT<<endl;
  }
  outf->Close();
 }
