@@ -143,7 +143,7 @@ public :
    TBranch        *b_gendphijt;   //!
    TBranch        *b_gendrjt;   //!
 
-   t(TTree *tree=0);
+   t(TString infile,TTree *tree=0);
    virtual ~t();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
@@ -152,24 +152,16 @@ public :
    virtual void     Loop();
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
+   TFile *f;
 };
 
 #endif
 
 #ifdef t_cxx
-t::t(TTree *tree) : fChain(0) 
+t::t(TString infile,TTree *tree) : fChain(0) 
 {
-// if parameter tree is not specified (or zero), connect the file
-// used to generate this class and read the Tree.
-   if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("openHLT_HF.root");
-      if (!f || !f->IsOpen()) {
-         f = new TFile("openHLT_HF.root");
-      }
-      TDirectory * dir = (TDirectory*)f->Get("openHLT_HF.root:/akPu4PFJetAnalyzer");
-      dir->GetObject("t",tree);
-
-   }
+   f = TFile::Open(infile);
+   tree = (TTree*) f->Get("akPu4CaloJetAnalyzer/t");
    Init(tree);
 }
 

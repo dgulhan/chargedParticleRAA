@@ -87,7 +87,7 @@ public :
    TBranch        *b_hiNevtPlane;   //!
    TBranch        *b_hiEvtPlanes;   //!
 
-   HiTree(TTree *tree=0);
+   HiTree(TString infile,TTree *tree=0);
    virtual ~HiTree();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
@@ -96,24 +96,16 @@ public :
    virtual void     Loop();
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
+   TFile *f;
 };
 
 #endif
 
 #ifdef HiTree_cxx
-HiTree::HiTree(TTree *tree) : fChain(0) 
+HiTree::HiTree(TString infile,TTree *tree) : fChain(0) 
 {
-// if parameter tree is not specified (or zero), connect the file
-// used to generate this class and read the Tree.
-   if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("openHLT_HF.root");
-      if (!f || !f->IsOpen()) {
-         f = new TFile("openHLT_HF.root");
-      }
-      TDirectory * dir = (TDirectory*)f->Get("openHLT_HF.root:/hiEvtAnalyzer");
-      dir->GetObject("HiTree",tree);
-
-   }
+   f = TFile::Open(infile);
+   tree = (TTree*) f->Get("hiEvtAnalyzer/HiTree");
    Init(tree);
 }
 

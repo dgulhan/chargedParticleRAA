@@ -43,7 +43,6 @@ public :
    Float_t         vtxDist2D[1];   //[nVtx]
    Float_t         vtxDist2DErr[1];   //[nVtx]
    Float_t         vtxDist2DSig[1];   //[nVtx]
-   Float_t         vtxDist2D[1];   //[nVtx]
    Float_t         vtxDist3DErr[1];   //[nVtx]
    Float_t         vtxDist3DSig[1];   //[nVtx]
    Int_t           nVtxSim;
@@ -104,7 +103,6 @@ public :
    TBranch        *b_vtxDist2D;   //!
    TBranch        *b_vtxDist2DErr;   //!
    TBranch        *b_vtxDist2DSig;   //!
-   TBranch        *b_vtxDist2D;   //!
    TBranch        *b_vtxDist3DErr;   //!
    TBranch        *b_vtxDist3DSig;   //!
    TBranch        *b_nVtxSim;   //!
@@ -143,7 +141,7 @@ public :
    TBranch        *b_pfEcal;   //!
    TBranch        *b_pfHcal;   //!
 
-   trackTree(TTree *tree=0);
+   trackTree(TString infile,TTree *tree=0);
    virtual ~trackTree();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
@@ -152,24 +150,16 @@ public :
    virtual void     Loop();
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
+   TFile *f;
 };
 
 #endif
 
 #ifdef trackTree_cxx
-trackTree::trackTree(TTree *tree) : fChain(0) 
+trackTree::trackTree(TString infile,TTree *tree) : fChain(0) 
 {
-// if parameter tree is not specified (or zero), connect the file
-// used to generate this class and read the Tree.
-   if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("openHLT_HF.root");
-      if (!f || !f->IsOpen()) {
-         f = new TFile("openHLT_HF.root");
-      }
-      TDirectory * dir = (TDirectory*)f->Get("openHLT_HF.root:/anaTrack");
-      dir->GetObject("trackTree",tree);
-
-   }
+   f = TFile::Open(infile);
+   tree = (TTree*) f->Get("anaTrack/trackTree");
    Init(tree);
 }
 
@@ -235,7 +225,6 @@ void trackTree::Init(TTree *tree)
    fChain->SetBranchAddress("vtxDist2D", vtxDist2D, &b_vtxDist2D);
    fChain->SetBranchAddress("vtxDist2DErr", vtxDist2DErr, &b_vtxDist2DErr);
    fChain->SetBranchAddress("vtxDist2DSig", vtxDist2DSig, &b_vtxDist2DSig);
-//    fChain->SetBranchAddress("vtxDist2D", vtxDist2D, &b_vtxDist2D);
    fChain->SetBranchAddress("vtxDist3DErr", vtxDist3DErr, &b_vtxDist3DErr);
    fChain->SetBranchAddress("vtxDist3DSig", vtxDist3DSig, &b_vtxDist3DSig);
    fChain->SetBranchAddress("nVtxSim", &nVtxSim, &b_nVtxSim);
