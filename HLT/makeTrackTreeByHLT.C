@@ -244,7 +244,7 @@ void makeTrackTreeByHLT(bool doGen = false){
   for(int jentry=0;jentry<nentries;jentry++){
    if((jentry%1000)==0) std::cout<<jentry<<"/"<<nentries<<std::endl;
    fhlt->GetEntry(jentry);
-   // if(!fL1[iHLT] || !fHLT[iHLT]) continue;
+   if(!fL1[iHLT] || !fHLT[iHLT]) continue;
     
    if(doGen){
     fgen->GetEntry(jentry);
@@ -311,8 +311,7 @@ void makeTrackTreeByHLT(bool doGen = false){
      fJtEta1 = jets[njet-1].second.first;
      fJtPhi1 = jets[njet-1].second.second;
     }
-   
-    if(fJtPt1 < ptCut[iHLT]) continue;
+    if(cutJet[iHLT] && (fJtPt1 < ptCut[iHLT])) continue;
   
     int fPres = 1;
      
@@ -331,6 +330,8 @@ void makeTrackTreeByHLT(bool doGen = false){
      }
      fNPart++;
     }
+    if(!cutJet[iHLT] && (fPPtMax < ptCut[iHLT])) continue;
+
     fHiBin = fhi->hiBin;
 
     float fWNColl[6];
