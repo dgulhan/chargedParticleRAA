@@ -3,7 +3,7 @@
 
 version=1
 dataset=/mnt/hadoop/cms/store/user/dgulhan/JetHT/HiForest_pp13TeV_JetHT_Run2015D_PromptReco_v3/6ad7619280763eb51bd217a6545ce408/
-destination=/mnt/hadoop/cms/store/user/dgulhan/CPR/pp13TeV/20151015_v2/
+destination=/mnt/hadoop/cms/store/user/dgulhan/CPR/pp13TeV/20151119/
 
 NAME="makeTrackTreeByHLT.C"
 g++ $NAME $(root-config --cflags --libs) -O2 -o "${NAME/%.C/}.exe"
@@ -13,6 +13,8 @@ logdir=/net/hisrv0001/home/dgulhan/logsCPR/${subdir}_v3
 mkdir $logdir
 
 mkdir -p $destination
+
+tar -cvzf corr.tar.gz trkCorrections
 
 for file in ${dataset}/HiForest_*
   do
@@ -62,7 +64,7 @@ Rank           = kflops
 should_transfer_files   = YES
 when_to_transfer_output = ON_EXIT
 # specify any extra input files (for example, an orcarc file)
-transfer_input_files    = makeTrackTreeByHLT.exe,list_triggers.txt
+transfer_input_files    = makeTrackTreeByHLT.exe,list_triggers.txt,corr.tar.gz
 
 Queue
 EOF

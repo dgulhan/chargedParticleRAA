@@ -12,7 +12,7 @@
 #include "TTree.h"
 #include "trackTree.C"
 #include "t.C"
-
+#include "getTrkCorr.h"
 
 struct newEvent{
 public :
@@ -28,6 +28,11 @@ public :
    float          pPhi[20000]; 
    float          pEta[20000]; 
    bool           pVtxComp[20000]; 
+   float          corr[20000]; 
+   float          eff[20000]; 
+   float          fake[20000]; 
+   float          second[20000]; 
+   float          multRec[20000]; 
    int            pres;
    float          fraction;
    void reset(){
@@ -49,7 +54,8 @@ public :
    newEvent(){
     reset();
    }
-   void setEvent(int fEvent, float fJtPt1,  float fJtEta1,  float fJtPhi1, float fPPtMax, float fPEtaPtMax, float fNPart, float *fPPt, float *fPEta, float *fPPhi, bool *fPVtxComp, int fPres, float fFraction){
+   void setEvent(int fEvent, float fJtPt1,  float fJtEta1,  float fJtPhi1, float fPPtMax, float fPEtaPtMax, float fNPart, float *fPPt, float *fPEta, float *fPPhi, float *fCorr, float *fEff, float *fFake, float *fSecond, float *fMultRec, bool *fPVtxComp, int fPres, float fFraction){   
+   
     event = fEvent;
     jtPt1 = fJtPt1;
     jtEta1 = fJtEta1;
@@ -62,13 +68,18 @@ public :
      pPhi[i] = fPPhi[i];
      pEta[i] = fPEta[i];
      pVtxComp[i] = fPVtxComp[i]; 
+     corr[i] = fCorr[i]; 
+     eff[i] = fEff[i]; 
+     fake[i] = fFake[i]; 
+     second[i] = fSecond[i]; 
+     multRec[i] = fMultRec[i]; 
     } 
 	pres = fPres;
 	fraction = fFraction;
    }
 };
 
-void makeTrackTreeByHLT(TString dataset = "", TString infile="", TString outfname = ""){ 
+void makeTrackTreeByHLT(TString dataset = "", TString infile = "", TString outfname = ""){ 
  TH1D::SetDefaultSumw2();   
  // TString infname="HiForest_1001_1_87G.root";
 
@@ -125,6 +136,11 @@ void makeTrackTreeByHLT(TString dataset = "", TString infile="", TString outfnam
   hltTrackTree[iHLT]->Branch("pPhi", evnt.pPhi, "pPhi[nPart]/F");
   hltTrackTree[iHLT]->Branch("pEta", evnt.pEta, "pEta[nPart]/F");
   hltTrackTree[iHLT]->Branch("pVtxComp", evnt.pVtxComp, "pVtxComp[nPart]/O");
+  hltTrackTree[iHLT]->Branch("corr", evnt.corr, "corr[nPart]/F");
+  hltTrackTree[iHLT]->Branch("eff", evnt.eff, "eff[nPart]/F");
+  hltTrackTree[iHLT]->Branch("fake", evnt.fake, "fake[nPart]/F");
+  hltTrackTree[iHLT]->Branch("second", evnt.second, "second[nPart]/F");
+  hltTrackTree[iHLT]->Branch("multRec", evnt.multRec, "multRec[nPart]/F");
  }
  
  //tree variables
@@ -139,6 +155,11 @@ void makeTrackTreeByHLT(TString dataset = "", TString infile="", TString outfnam
  float fPPt[20000];
  float fPEta[20000];
  float fPPhi[20000];
+ float fCorr[20000];
+ float fFake[20000];
+ float fEff[20000];
+ float fSecond[20000];
+ float fMultRec[20000];
  bool fPVtxComp[20000];
 
  int fHLT[100];
@@ -159,6 +180,9 @@ void makeTrackTreeByHLT(TString dataset = "", TString infile="", TString outfnam
   fhlt->SetBranchStatus(nameHLT[iHLT].data(), 1);
   fhlt->SetBranchAddress(nameHLT[iHLT].data(), &(fHLT[iHLT]));
  }
+ 
+ TrkCorr * trkCorr = new TrkCorr();
+
  for(int iHLT = 0; iHLT < numHLT; iHLT++ ){
 
   //loop over events
@@ -168,6 +192,33 @@ void makeTrackTreeByHLT(TString dataset = "", TString infile="", TString outfnam
 
   for(int jentry=0;jentry<nentries;jentry++){
   // for(int jentry=0;jentry<100;jentry++){
+  
+   fEvent = 0;
+   fJtPt1 = -99;
+   fJtEta1 = -99;
+   fJtPhi1 = -99;
+   fPPtMax = -99;
+   fPEtaPtMax = -99;
+   fNPart = -99;
+   for(int i = 0; i < 20000; i++){
+    fPPt[i] = -99;
+    fPEta[i] = -99;
+    fPPhi[i] = -99;
+    fCorr[i] = -99;
+    fFake[i] = -99;
+    fEff[i] = -99;
+    fSecond[i] = -99;
+    fMultRec[i] = -99;
+    fPVtxComp[i] = false;
+   }
+   
+   for(int i = 0; i < 100; i++){
+    fHLT[i] = 0;
+    fPresHLT[i] = 0;
+    fL1[i] = 0;
+    fPresL1[i] = 0;
+   }
+   
    if((jentry%1000)==0) std::cout<<jentry<<"/"<<nentries<<std::endl;
 
    ftrk->GetEntry(jentry);
@@ -211,6 +262,12 @@ void makeTrackTreeByHLT(TString dataset = "", TString infile="", TString outfnam
     fPPt[ipart] = ftrk->trkPt[ipart];
     fPEta[ipart] = ftrk->trkEta[ipart];
     fPPhi[ipart] = ftrk->trkPhi[ipart];
+	fCorr[ipart] = trkCorr->getTrkCorr(fPPt[ipart], fPEta[ipart], fPPhi[ipart], 0);
+	fFake[ipart] = trkCorr->getTrkCorr(fPPt[ipart], fPEta[ipart], fPPhi[ipart], 1);
+	fEff[ipart] = trkCorr->getTrkCorr(fPPt[ipart], fPEta[ipart], fPPhi[ipart], 2);
+	fSecond[ipart] = trkCorr->getTrkCorr(fPPt[ipart], fPEta[ipart], fPPhi[ipart], 3);
+	fMultRec[ipart] = trkCorr->getTrkCorr(fPPt[ipart], fPEta[ipart], fPPhi[ipart], 4);
+
     fPVtxComp[ipart] = (fabs(ftrk->trkDxy1[ipart]/ftrk->trkDxyError1[ipart])<3.0 && fabs(ftrk->trkDz1[ipart]/ftrk->trkDzError1[ipart])<3.0);
     if(fPPt[ipart] > fPPtMax){
      fPPtMax = fPPt[ipart];
@@ -219,7 +276,7 @@ void makeTrackTreeByHLT(TString dataset = "", TString infile="", TString outfnam
     fNPart++;
    }
    
-   evnt.setEvent(fEvent, fJtPt1,  fJtEta1,  fJtPhi1, fPPtMax, fPEtaPtMax, fNPart, fPPt, fPEta, fPPhi, fPVtxComp, fPres, fraction[iHLT]);
+   evnt.setEvent(fEvent, fJtPt1,  fJtEta1,  fJtPhi1, fPPtMax, fPEtaPtMax, fNPart, fPPt, fPEta, fPPhi, fCorr, fEff, fFake, fSecond, fMultRec, fPVtxComp, fPres, fraction[iHLT]);
   
    fEvent++;
    // cout<<evnt.beta<<endl;
