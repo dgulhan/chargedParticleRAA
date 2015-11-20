@@ -44,7 +44,7 @@ void plot(){
  
  float cutEta = 2.;
  
- TFile * file = new TFile(Form("hltTree20151019merged.root"));
+ TFile * file = new TFile(Form("merged_out.root"));
  
  std::cout<<"parse trigger names and prescales"<<std::endl;
  std::stringstream ftriggers;
@@ -79,7 +79,7 @@ void plot(){
  
  std::cout<<3<<std::endl;  
  double ptMin = 10;
- double ptMax = 1000;
+ double ptMax = 300;
  double inix = log(ptMin)/log(10);
  double step = (log(ptMax)-log(ptMin))/(nPtBins*log(10));
  std::cout<<4<<std::endl;  
@@ -127,7 +127,7 @@ void plot(){
  std::cout<<8<<std::endl;  
 
  
- TLegend *leg = new TLegend(0.6,0.6,0.9,0.99);
+ TLegend *leg = new TLegend(0.4,0.7,0.9,0.99);
  leg->SetBorderSize(0);
  leg->SetFillStyle(0);
 
@@ -135,7 +135,7 @@ void plot(){
   histPt[iHLT] = new TH1F(Form("hist_pt_%s",nameHLT[iHLT].data()),";raw track p_{T} (GeV);", nPtBins, ptBins);
   hisJtPt[iHLT] = new TH1F(Form("hist_jtpt_%s",nameHLT[iHLT].data()),";jet p_{T} (GeV);", nPtBins, ptBins);
   
-  tree[iHLT]->Draw(Form("pPt>>hist_pt_%s",nameHLT[iHLT].data()),Form("(abs(pEta)<%f  && jtPt1>%.1f && jtPt1<%.1f && pPt<jtPt1 && pVtxComp)", cutEta, ptCut[iHLT], ptCut[iHLT+1]));
+  tree[iHLT]->Draw(Form("pPt>>hist_pt_%s",nameHLT[iHLT].data()),Form("(abs(pEta)<%f  && jtPt1>%.1f && jtPt1<%.1f && pPt<jtPt1)", cutEta, ptCut[iHLT], ptCut[iHLT+1]));
   tree[iHLT]->Draw(Form("jtPt1>>hist_jtpt_%s",nameHLT[iHLT].data()),Form("jtPt1>%.1f && jtPt1<%.1f", ptCut[iHLT], ptCut[iHLT+1]));
   
   histPt[iHLT]->Scale(1./fractionCum[iHLT]);
@@ -168,7 +168,7 @@ void plot(){
  
  TH1F * histPtLowest =  new TH1F("histPtLowest","", nPtBins, ptBins);
  // tree[0]->Draw("pPt>>histPtLowest",Form("abs(pEta)<%.1f && pPt<jtPt1*1.2",cutEta));
- tree[0]->Draw("pPt>>histPtLowest",Form("abs(pEta)<%.1f && pPt<jtPt1 && pVtxComp", cutEta));
+ tree[0]->Draw("pPt>>histPtLowest",Form("abs(pEta)<%.1f && pPt<jtPt1", cutEta));
  histPtLowest->Scale(1./fractionCum[0]);
  for(int ibin = 0; ibin < histPtLowest->GetNbinsX(); ibin++){
   histPtLowest->SetBinContent(ibin+1, histPtLowest->GetBinContent(ibin+1)/histPtLowest->GetBinWidth(ibin+1));  
@@ -202,18 +202,26 @@ void plot(){
  
  //plotting
  TCanvas * c1 = new TCanvas("c1","",600,600);
- TH1F * empty = new TH1F("empty",";p_{T};(dN_{trk raw}/dp_{T})", nPtBins, ptBins);
+ TH1F * empty = new TH1F("empty",";p_{T};(Arbitrary scale)(dN_{trk raw}/dp_{T})", nPtBins, ptBins);
  empty->GetXaxis()->CenterTitle();
  empty->GetYaxis()->CenterTitle();
  empty->Fill(10,-9);
- empty->SetMaximum(1000000000);
+ empty->SetMaximum(10000000);
  empty->SetMinimum(0.01);
  empty->Draw();
+ TH1F * empty3 = new TH1F("empty3",";p_{T};(Arbitrary scale)(dN_{jet}/dp_{T})", 10,40,300);
+ 
+ empty3->GetXaxis()->CenterTitle();
+ empty3->GetYaxis()->CenterTitle();
+ empty3->Fill(10,-9);
+ empty3->SetMaximum(10000000);
+ empty3->SetMinimum(0.01);
+ // empty3->Draw();
  c1->SetLogy();
  c1->SetLogx();
  for(int iHLT = 0; iHLT < numHLT; iHLT++){
   histPt[iHLT]->Draw("same hist");
- } 
+ }  
  hisPtSum->SetLineWidth(2);
  hisPtSum->Draw("same hist"); 
  histPtLowest->Draw("same"); 
@@ -224,7 +232,7 @@ void plot(){
  leg->AddEntry(hisPtSum,"combination","l");
  leg->AddEntry(histPtLowest, (nameHLT[0]+=" no cut").data(),"p");
  leg->Draw("same");
- drawText("pp 13 TeV run D",0.2,0.9); 
+ drawText("pp 5.02 TeV",0.2,0.9); 
  c1->RedrawAxis();
  c1->SaveAs(Form("trackCount_doJet_2_nohp.pdf"));
  c1->SaveAs(Form("trackCount_doJet_2_nohp.png"));
@@ -233,8 +241,8 @@ void plot(){
  TH1F * empty2 = (TH1F*)empty->Clone("empty2");
  empty2->GetYaxis()->SetTitle("(dN_{jet}/dp_{T})");
 
- empty2->SetMaximum(1000000000);
- empty2->SetMinimum(0.1); empty2->Draw();
+ empty2->SetMaximum(10000000);
+ empty2->SetMinimum(0.001); empty3->Draw();
  c2->SetLogy();
  c2->SetLogx();
  for(int iHLT = 0; iHLT < numHLT; iHLT++){
@@ -244,7 +252,7 @@ void plot(){
  hisJtPtSum->Draw("same hist");
  histJtPtLowest->Draw("same");
  leg->Draw("same");
- drawText("pp 13 TeV run D",0.2,0.9);
+ drawText("pp 5.02 TeV",0.2,0.9);
  c2->RedrawAxis();
  c2->SaveAs(Form("jetCount_doJet_2.pdf"));
  c2->SaveAs(Form("jetCount_doJet_2.png"));

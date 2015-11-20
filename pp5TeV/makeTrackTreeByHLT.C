@@ -262,6 +262,9 @@ void makeTrackTreeByHLT(TString dataset = "", TString infile = "", TString outfn
     fPPt[ipart] = ftrk->trkPt[ipart];
     fPEta[ipart] = ftrk->trkEta[ipart];
     fPPhi[ipart] = ftrk->trkPhi[ipart];
+	if(fPPt[ipart]<0.5) continue;
+	if(fPPt[ipart]>300) continue;
+	if(fabs(fPEta[ipart])>2.4) continue;
 	fCorr[ipart] = trkCorr->getTrkCorr(fPPt[ipart], fPEta[ipart], fPPhi[ipart], 0);
 	fFake[ipart] = trkCorr->getTrkCorr(fPPt[ipart], fPEta[ipart], fPPhi[ipart], 1);
 	fEff[ipart] = trkCorr->getTrkCorr(fPPt[ipart], fPEta[ipart], fPPhi[ipart], 2);
